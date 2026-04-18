@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="icon.png">
+    <title>末影阁 EnderNest - Minecraft服务器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+
+        /* 背景容器 - 替换这里的背景图 */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("./bg.jpg");
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+
+        /* 飘落樱花花瓣 */
+        .petal {
+            position: fixed;
+            top: -50px;
+            font-size: 20px;
+            animation: fall linear infinite;
+            opacity: 0.8;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        /* 主容器 */
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 卡片 - 调小容器 */
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 服务器标题 */
+        .server-title {
+            font-size: 36px;
+            color: #fff;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            font-weight: bold;
+        }
+
+        .server-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 25px;
+        }
+
+        /* 统计信息 */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 4px;
+        }
+
+        /* 服务器地址框 */
+        .server-address {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 25px;
+            padding: 12px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .server-address:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .address-text {
+            color: #fff;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .copy-btn.copied {
+            background: #10b981;
+        }
+
+        /* 底部信息 */
+        .footer-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-item {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-item strong {
+            color: #fff;
+        }
+
+        /* 在线状态 */
+        .online-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .server-title {
+                font-size: 28px;
+            }
+            
+            .stats {
+                gap: 25px;
+            }
+            
+            .stat-number {
+                font-size: 24px;
+            }
+            
+            .card {
+                padding: 25px 20px;
+            }
+            
+            .footer-info {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景 -->
+    <div class="background" style="background-image: url('bg.jpg');"></div>
+    <div class="overlay"></div>
+
+    <!-- 主内容 -->
+    <div class="container">
+        <div class="card">
+            <h1 class="server-title">末影阁 EnderNest</h1>
+            <p class="server-subtitle">欢迎来到我们的Minecraft服务器</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="onlinePlayers">
+                        <span class="loading"></span>
+                    </span>
+                    <div class="stat-label">在线玩家</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="maxPlayers">
+                        <span class="loading"></span>
+                    </span>
+                    <div class="stat-label">最大人数</div>
+                </div>
+            </div>
+
+            <div class="server-address">
+                <span class="address-text" id="serverAddress">mc.l-w.top</span>
+                <button class="copy-btn" onclick="copyAddress()">
+                    <span id="btnText">复制</span>
+                </button>
+            </div>
+
+            <div class="footer-info">
+                <div class="footer-item">
+                    <span class="online-indicator"></span>
+                    <span>服务器运行中</span>
+                </div>
+                <div class="footer-item">
+                    <span>📋 Favicon</span>
+                    <strong>已配置</strong>
+                </div>
+                <div class="footer-item">
+                    <span>📝 备案号</span>
+                    <strong>待添加</strong>
+                </div>
+                <div class="footer-item">
+                    <span>🌐 展示地址</span>
+                    <strong>mc.l-w.top</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 复制服务器地址
+        function copyAddress() {
+            const address = 'mc.l-w.top';
+            navigator.clipboard.writeText(address).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const btnText = document.getElementById('btnText');
+                const originalText = btnText.textContent;
+                
+                btn.classList.add('copied');
+                btnText.textContent = '已复制!';
+                
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btnText.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                // 兼容旧浏览器
+                const textArea = document.createElement('textarea');
+                textArea.value = address;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const btn = document.querySelector('.copy-btn');
+                const btnText = document.getElementById('btnText');
+                btnText.textContent = '已复制!';
+                setTimeout(() => {
+                    btnText.textContent = '复制';
+                }, 2000);
+            });
+        }
+
+        // 创建飘落的樱花
+        function createPetal() {
+            const petal = document.createElement('div');
+            petal.className = 'petal';
+            petal.textContent = '🌸';
+            petal.style.left = Math.random() * 100 + 'vw';
+            petal.style.animationDuration = (Math.random() * 5 + 5) + 's';
+            petal.style.opacity = Math.random() * 0.6 + 0.4;
+            petal.style.fontSize = (Math.random() * 15 + 15) + 'px';
+            
+            document.body.appendChild(petal);
+            
+            setTimeout(() => {
+                petal.remove();
+            }, 10000);
+        }
+
+        // 定期创建樱花
+        setInterval(createPetal, 300);
+
+        // 从API获取服务器数据
+        async function fetchServerData() {
+            try {
+                const response = await fetch('https://list.mczfw.com/api/mc.l-w.top');
+                if (!response.ok) {
+                    throw new Error('网络响应失败');
+                }
+                const data = await response.json();
+                
+                // 更新在线人数 (p)
+                const onlinePlayers = document.getElementById('onlinePlayers');
+                onlinePlayers.textContent = data.p || 0;
+                
+                // 更新最大人数 (mp)
+                const maxPlayers = document.getElementById('maxPlayers');
+                maxPlayers.textContent = data.mp || 0;
+                
+            } catch (error) {
+                console.error('获取服务器数据失败:', error);
+                // 显示错误信息
+                document.getElementById('onlinePlayers').textContent = '-';
+                document.getElementById('maxPlayers').textContent = '-';
+            }
+        }
+
+        // 页面加载时获取数据
+        window.addEventListener('load', () => {
+            // 添加一些初始樱花
+            for (let i = 0; i < 10; i++) {
+                setTimeout(createPetal, i * 200);
+            }
+            
+            // 首次获取数据
+            fetchServerData();
+            
+            // 每30秒刷新一次数据
+            setInterval(fetchServerData, 30000);
+        });
+    </script>
+</body>
+</html>
